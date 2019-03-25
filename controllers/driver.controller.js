@@ -1,0 +1,216 @@
+const db = require('../models/index');
+const utils = require('../helpers/utils');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
+const Driver = db.Driver;
+
+// CREATE
+const post = (req, res, next) => {
+    Driver.create(req.body)
+    .then(driver => {
+        res.send(driver);
+    }).catch(next);
+}
+
+// GET ALL
+const getAll = (req, res, next) => {
+    Driver.findAll({
+        paranoid: false
+    }).then(driver => {
+        res.send(driver);
+    }).catch(next);
+}
+
+// FIND BY ID
+const findById = (req, res, next) => {
+    let id = req.params.id;
+    Driver.findByPk(id)
+    .then(driver => {
+        if(!driver) res.sendStatus(404);
+        else {
+            res.send(driver);
+        }
+    })
+    .catch(next);
+}
+
+// UPDATE
+const updateById = (req,res,next) => {
+    Driver.update({...req.body}, {where: {id: req.params.id}})
+    .then(() => {
+        res.send('Driver info updated.');
+    }).catch(next);
+}
+
+// DELETE
+const deleteById = (req, res, next) => {
+    const id = req.params.id;
+    Driver.destroy({
+        where: {id: id}
+    })
+    .then(() => {
+        res.send(`Deleted Driver ID no.: ${id}`);
+    }).catch(next);
+}
+
+// IMPORT CSV FILE
+const importcsv = async (req, res) => {
+    const file = req.file ? req.file.path : null;
+    console.log('File', file);
+    if(!file) return ReE(res, { message: 'CSV file not found'}, 400);
+
+    const csv = require('../helpers/csv_validator');
+
+    const headers = {
+        name: '',
+        age: '',
+        licenseNumber: '',
+        address: '',
+        scheduleId
+    }
+
+    async function insert(json) {
+        let err, driver;
+        [err, driver] = await to(Driver.bulkCreate(json));
+        if(err) return ReE(res, err, 500);
+
+        return ReS(res, {
+            message: 'Successfully imported CSV file',
+            data: driver
+        }, 200);
+    }
+
+    async function validateJSON(json) {
+        insert(json);
+    }
+
+    function start() {
+        csv(file, headers)
+        .then( result => {
+            validateJSON(result);
+        })
+        .catch(err => {
+            return ReE(res, {
+                message: 'Failed to import csv file',
+                data: err
+            }, 400);
+        });
+    }
+    start();
+}
+
+// EXPORT CSV FILE
+const exportcsv = async (req, res) => {
+    let err, driver;
+
+    [err, driver] = await to(Driver.findAll());
+    if(err) return ReE(res, err, 500);
+    if(!driver) return ReE(res, {message:'No data to download'}, 400);
+
+    driver = utils.clone(driver);
+
+    const json2csv = require('json2csv').Parser;
+    const parser = new json2csv({encoding:'utf-8', withBOM: true});
+    const csv = parser.parse(driver);
+
+    res.setHeader('Content-disposition', 'attachment; filename=Drivers.csv');
+    res.set('Content-type','text/csv');
+    res.send(csv);
+}
+
+// FILTER (FIELDS)
+const filter = async (req, res, next) => {
+	let reqQuery = req.query;
+	let reqQuery_Sort = req.query.sortBy;
+	let condition = {};
+	let sort = [];
+    if (Object.keys(reqQuery).length > 0) {
+        if (reqQuery_Sort) {
+            sort = await db.convertToArrSort(reqQuery_Sort); //get Array Sort
+            delete reqQuery.sortBy; //remove sortBy key from req.query
+        }
+        condition = reqQuery; //get Condition(s)
+    }
+
+    Driver.findAll({
+        attributes: [
+            [db.sequelize.fn('concat', db.sequelize.col('name'), ', ', db.sequelize.col('address')), 'Result: ']
+		],
+        where: condition,
+        order: sort,
+        limit: 10
+    }).then(users => {
+        res.send(users);
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
+// SEARCH (LIKE) 
+const search = async (req, res, next) => {
+    res.setHeader('Content-type','application/json');
+    const {
+        id,
+        name,
+        age,
+        licenseNumber,
+        address
+    } = req.query;
+    [err, driver] = await to(Driver.findAll({
+        attributes: [
+            [db.sequelize.fn('concat', db.sequelize.col('name'), ', ', db.sequelize.col('address')), 'Result: ']
+		],
+        where: {
+            [Sequelize.Op.or]: [
+                {id: {[Sequelize.Op.like]: '%' +id+ '%'}},
+                {name: {[Sequelize.Op.like]: '%' +name+ '%'}},
+                {age: {[Sequelize.Op.like]: '%' +age+ '%'}},
+                {licenseNumber: {[Sequelize.Op.like]: '%' +licenseNumber+ '%'}},
+                {address: {[Sequelize.Op.like]: '%' +address+ '%'}},
+            ]
+        },
+        limit: 10
+    }));
+    if(err) return ReE(res, err, 500);
+    return ReS(res, {
+        message: 'Search result: ',
+        data: driver
+    }, 200);
+ }
+
+//  PAGINATION
+const getDriverList = (req, res, next) => {
+    let limit = 10;
+    let offset = 0;
+    Driver.findAndCountAll()
+    .then(data => {
+        let page = req.params.page;
+        let pages = Math.ceil(data.count / limit);
+            offset = limit * (page -1);
+            Driver.findAll({
+            attributes: ['id','name','age','licenseNumber','address'],
+            limit: limit,
+            offset: offset,
+            $sort: { id: 1}
+        })
+        .then(driver => {
+            res.status(200).json({'result': driver, 'count':data.count, 'pages': pages});
+        });
+    })
+    .catch(err => {
+        res.status(500).send('Internal server error');
+    });
+}
+
+module.exports = {
+    post,
+    getAll,
+    findById,
+    updateById,
+    deleteById,
+    importcsv,
+    exportcsv,
+    filter,
+    search,
+    getDriverList
+}

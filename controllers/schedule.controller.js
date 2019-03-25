@@ -112,7 +112,7 @@ const exportcsv = async (req, res) => {
     const parser = new json2csv({encoding:'utf-8', withBOM: true});
     const csv = parser.parse(schedule);
 
-    res.setHeader('Content-disposition', 'attachment; filename=schedule.csv');
+    res.setHeader('Content-disposition', 'attachment; filename=OperationSchedule.csv');
     res.set('Content-type','text/csv');
     res.send(csv);
 }

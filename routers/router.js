@@ -7,6 +7,7 @@ const upload = multer({ dest: './uploads/'})
 const data = require('../controllers/alldata.controller');
 const jeepney = require('../controllers/jeepney.controller');
 const schedule = require('../controllers/schedule.controller');
+const driver = require('../controllers/driver.controller');
 
 router.get('/data/get', data.getAllData);
 router.post('/jeepney/post', jeepney.post);
@@ -29,5 +30,15 @@ router.post('/schedule/import', upload.single('file') , schedule.importcsv);
 router.get('/schedule/filter', schedule.filter);
 router.get('/schedule/search', schedule.search);
 router.get('/schedule/pagination/:page', schedule.getScheduleList);
+
+router.post('/driver/post', driver.post);
+router.get('/driver/get', driver.getAll);
+router.get('/driver/get/:id', driver.findById);
+router.put('/driver/put/:id', driver.updateById);
+router.delete('/driver/delete/:id', driver.deleteById);
+router.post('/driver/import', upload.single('file') , driver.importcsv);
+router.get('/driver/filter', driver.filter);
+router.get('/driver/search', driver.search);
+router.get('/driver/pagination/:page', driver.getDriverList);
 
 module.exports = router;

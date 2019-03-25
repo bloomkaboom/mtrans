@@ -1,5 +1,5 @@
 {
-  "name": "toymapper",
+  "name": "business",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,19 +11,13 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
-    "circular-json": "^0.5.9",
-    "csv2json": "^1.4.2",
     "csvtojson": "^2.0.8",
     "express": "^4.16.4",
-    "fast-csv": "^2.4.1",
     "json2csv": "^4.3.5",
-    "jsontocsv": "^0.3.0",
     "multer": "^1.4.1",
-    "mysql": "^2.16.0",
     "mysql2": "^1.6.5",
     "parse-error": "^0.2.0",
-    "sequelize": "^4.43.0",
-    "sequelize-cli": "^5.4.0",
+    "sequelize": "^5.1.0",
     "volleyball": "^1.5.1"
   }
 }

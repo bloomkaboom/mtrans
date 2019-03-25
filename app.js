@@ -1,29 +1,22 @@
 require('./global_functions');
 
 const express = require('express');
-const app = express();
-const bodyparser = require('body-parser');
+const bodyParser = require('body-parser');
 const volleyball = require('volleyball');
+const routes = require('./routers/router');
 const models = require('./models');
-// const path = require('path');
-// const multer = require('multer');
+const app = express();
+const db = {};
 
-// models.sequelize.sync({'force': true});
-const routes = require('./routes/routers');
-
-// middleware for logging
+app.use(bodyParser.urlencoded({extended:false}))
+app.use(bodyParser.json())
 app.use(volleyball);
-// middleware for parsing
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({'extended': true}));
+app.use('/', routes)
 
-app.use('/', routes);
-
-//default route
 app.use('*', (req, res, next) => {
     res.send('default route');
 });
 
-const server = app.listen( 3000, () => {
-    console.log('Operating and listening on port', server.address().port);
+const server = app.listen(5000, () => {
+    console.log('App listening on port', server.address().port);
 });

@@ -66,7 +66,7 @@ const importcsv = async (req, res) => {
         age: '',
         licenseNumber: '',
         address: '',
-        scheduleId
+        scheduleId: ''
     }
 
     async function insert(json) {
@@ -154,7 +154,8 @@ const search = async (req, res, next) => {
         name,
         age,
         licenseNumber,
-        address
+        address,
+        scheduleId
     } = req.query;
     [err, driver] = await to(Driver.findAll({
         attributes: [
@@ -167,6 +168,7 @@ const search = async (req, res, next) => {
                 {age: {[Sequelize.Op.like]: '%' +age+ '%'}},
                 {licenseNumber: {[Sequelize.Op.like]: '%' +licenseNumber+ '%'}},
                 {address: {[Sequelize.Op.like]: '%' +address+ '%'}},
+                {scheduleId: {[Sequelize.Op.like]: '%' +scheduleId+ '%'}}
             ]
         },
         limit: 10
@@ -188,7 +190,7 @@ const getDriverList = (req, res, next) => {
         let pages = Math.ceil(data.count / limit);
             offset = limit * (page -1);
             Driver.findAll({
-            attributes: ['id','name','age','licenseNumber','address'],
+            attributes: ['id','name','age','licenseNumber','address', 'scheduleId'],
             limit: limit,
             offset: offset,
             $sort: { id: 1}

@@ -2,33 +2,33 @@ const db = require('../models/index');
 const utils = require('../helpers/utils');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const Schedule = db.Schedule;
+const Boundary = db.Boundary;
 
 // CREATE
 const post = (req, res, next) => {
-    Schedule.create(req.body)
-    .then( sched => {
-        res.send(sched);
+    Boundary.create(req.body)
+    .then(boundary => {
+        res.send(boundary);
     }).catch(next);
 }
 
 // GET ALL
 const getAll = (req, res, next) => {
-    Schedule.findAll({
+    Boundary.findAll({
         paranoid: false
-    }).then(sched => {
-        res.send(sched);
+    }).then(boundary => {
+        res.send(boundary);
     }).catch(next);
 }
 
 // FIND BY ID
 const findById = (req, res, next) => {
     let id = req.params.id;
-    Schedule.findByPk(id)
-    .then(schedule => {
-        if(!schedule) res.sendStatus(404);
+    Boundary.findByPk(id)
+    .then(region => {
+        if(!region) res.sendStatus(404);
         else {
-            res.send(schedule);
+            res.send(region);
         }
     })
     .catch(next);
@@ -36,20 +36,20 @@ const findById = (req, res, next) => {
 
 // UPDATE
 const updateById = (req,res,next) => {
-    Schedule.update({...req.body}, {where: {id: req.params.id}})
+    Boundary.update({...req.body}, {where: {id: req.params.id}})
     .then(() => {
-        res.send('Schedule updated.');
+        res.send('Boundary updated.');
     }).catch(next);
 }
 
 // DELETE
 const deleteById = (req, res, next) => {
     const id = req.params.id;
-    Schedule.destroy({
+    Boundary.destroy({
         where: {id: id}
     })
     .then(() => {
-        res.send(`Deleted Schedule ID: ${id}`);
+        res.send(`Deleted Boundary ID no.: ${id}`);
     }).catch(next);
 }
 
@@ -62,20 +62,20 @@ const importcsv = async (req, res) => {
     const csv = require('../helpers/csv_validator');
 
     const headers = {
-        name: '',
-        timeIn: '',
-        timeOut: '',
-        jeepneyId: ''
+        amountGiven: '',
+        targetAmount: '',
+        date: '',
+        driverId: ''
     }
 
     async function insert(json) {
-        let err, schedule;
-        [err, schedule] = await to(Schedule.bulkCreate(json));
+        let err, boundary;
+        [err, boundary] = await to(Boundary.bulkCreate(json));
         if(err) return ReE(res, err, 500);
 
         return ReS(res, {
             message: 'Successfully imported CSV file',
-            data: schedule
+            data: boundary
         }, 200);
     }
 
@@ -100,19 +100,19 @@ const importcsv = async (req, res) => {
 
 // EXPORT CSV FILE
 const exportcsv = async (req, res) => {
-    let err, schedule;
+    let err, boundary;
 
-    [err, schedule] = await to(Schedule.findAll());
+    [err, boundary] = await to(Boundary.findAll());
     if(err) return ReE(res, err, 500);
-    if(!schedule) return ReE(res, {message:'No data to download'}, 400);
+    if(!boundary) return ReE(res, {message:'No data to download'}, 400);
 
-    schedule = utils.clone(schedule);
+    boundary = utils.clone(boundary);
 
     const json2csv = require('json2csv').Parser;
     const parser = new json2csv({encoding:'utf-8', withBOM: true});
-    const csv = parser.parse(schedule);
+    const csv = parser.parse(boundary);
 
-    res.setHeader('Content-disposition', 'attachment; filename=OperationSchedule.csv');
+    res.setHeader('Content-disposition', 'attachment; filename=boundaryUnits.csv');
     res.set('Content-type','text/csv');
     res.send(csv);
 }
@@ -121,10 +121,7 @@ const exportcsv = async (req, res) => {
 const filter = async (req, res, next) => {
 	let reqQuery = req.query;
 	let reqQuery_Sort = req.query.sortBy;
-	let condition = {id,
-        name,
-        timeIn,
-        timeOut};
+	let condition = {};
 	let sort = [];
     if (Object.keys(reqQuery).length > 0) {
         if (reqQuery_Sort) {
@@ -134,9 +131,9 @@ const filter = async (req, res, next) => {
         condition = reqQuery; //get Condition(s)
     }
 
-    Schedule.findAll({
+    Boundary.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('name'), ', ', db.sequelize.col('jeepneyId')), 'Result: ']
+            [db.sequelize.fn('concat', db.sequelize.col('amountGiven'), ', ', db.sequelize.col('date')), 'Result: ']
 		],
         where: condition,
         order: sort,
@@ -148,25 +145,27 @@ const filter = async (req, res, next) => {
     });
 }
 
-// SEARCH (LIKE)
+// SEARCH (LIKE) 
 const search = async (req, res, next) => {
     res.setHeader('Content-type','application/json');
-    let condition = {
+    const {
         id,
-        name,
-        timeIn,
-        timeOut
+        amountGiven,
+        targetAmount,
+        date,
+        driverId
     } = req.query;
-    [err, schedule] = await to(Schedule.findAll({
+    [err, boundary] = await to(Boundary.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('name'), ', ', db.sequelize.col('jeepneyId')), 'Result: ']
-        ],
+            [db.sequelize.fn('concat', db.sequelize.col('amountGiven'), ', ', db.sequelize.col('date')), 'Result: ']
+		],
         where: {
             [Sequelize.Op.or]: [
                 {id: {[Sequelize.Op.like]: '%' +id+ '%'}},
-                {name: {[Sequelize.Op.like]: '%' +name+ '%'}},
-                {timeIn: {[Sequelize.Op.like]: '%' +timeIn+ '%'}},
-                {timeOut: {[Sequelize.Op.like]: '%' +timeOut+ '%'}}
+                {amountGiven: {[Sequelize.Op.like]: '%' +amountGiven+ '%'}},
+                {targetAmount: {[Sequelize.Op.like]: '%' +targetAmount+ '%'}},
+                {date: {[Sequelize.Op.like]: '%' +date+ '%'}},
+                {driverId: {[Sequelize.Op.like]: '%' +driverId+ '%'}},
             ]
         },
         limit: 10
@@ -174,34 +173,34 @@ const search = async (req, res, next) => {
     if(err) return ReE(res, err, 500);
     return ReS(res, {
         message: 'Search result: ',
-        data: schedule
+        data: boundary
     }, 200);
  }
 
- //  PAGINATION
-const getScheduleList = (req, res, next) => {
+//  PAGINATION
+const getBoundaryList = (req, res, next) => {
     let limit = 10;
     let offset = 0;
-    Schedule.findAndCountAll()
+    Boundary.findAndCountAll()
     .then(data => {
         let page = req.params.page;
         let pages = Math.ceil(data.count / limit);
             offset = limit * (page -1);
-            Schedule.findAll({
-            attributes: ['id','name','timeIn','timeOut','jeepneyId'],
+            Boundary.findAll({
+            attributes: ['id','amountGiven','targetAmount','date','driverId'],
             limit: limit,
             offset: offset,
             $sort: { id: 1}
         })
-        .then( schedule => {
-            res.status(200).json({'result': schedule, 'count':data.count, 'pages': pages});
+        .then( boundary => {
+            res.status(200).json({'result': boundary, 'count':data.count, 'pages': pages});
         });
     })
     .catch(err => {
         res.status(500).send('Internal server error');
     });
-
 }
+
 module.exports = {
     post,
     getAll,
@@ -212,5 +211,5 @@ module.exports = {
     exportcsv,
     filter,
     search,
-    getScheduleList
+    getBoundaryList
 }

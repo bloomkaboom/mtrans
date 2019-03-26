@@ -8,6 +8,7 @@ const data = require('../controllers/alldata.controller');
 const jeepney = require('../controllers/jeepney.controller');
 const schedule = require('../controllers/schedule.controller');
 const driver = require('../controllers/driver.controller');
+const boundary = require('../controllers/boundary.controller');
 
 router.get('/data/get', data.getAllData);
 router.post('/jeepney/post', jeepney.post);
@@ -40,5 +41,15 @@ router.post('/driver/import', upload.single('file') , driver.importcsv);
 router.get('/driver/filter', driver.filter);
 router.get('/driver/search', driver.search);
 router.get('/driver/pagination/:page', driver.getDriverList);
+
+router.post('/boundary/post', boundary.post);
+router.get('/boundary/get', boundary.getAll);
+router.get('/boundary/get/:id', boundary.findById);
+router.put('/boundary/put/:id', boundary.updateById);
+router.delete('/boundary/delete/:id', boundary.deleteById);
+router.post('/boundary/import', upload.single('file') , boundary.importcsv);
+router.get('/boundary/filter', boundary.filter);
+router.get('/boundary/search', boundary.search);
+router.get('/boundary/pagination/:page', boundary.getBoundaryList);
 
 module.exports = router;

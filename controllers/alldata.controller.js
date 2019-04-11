@@ -26,6 +26,8 @@ const getAllData = (req, res, next) => {
         ]
     }).then( all => {
         res.send({List: all});
+    }).catch(err => {
+        res.status(500).send('Internal server error');
     });
 }
 

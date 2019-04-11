@@ -10,6 +10,7 @@ module.exports = {
       },
       plateNumber: {
         type: Sequelize.STRING
+
       },
       route: {
         type: Sequelize.STRING
